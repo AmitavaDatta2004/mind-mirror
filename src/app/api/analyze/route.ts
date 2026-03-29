@@ -9,24 +9,23 @@ export async function POST(request: Request) {
     }
 
     const hfToken = process.env.HF_TOKEN || process.env.HUGGINGFACE_API_KEY;
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (hfToken) {
-      headers["Authorization"] = `Bearer ${hfToken}`;
-    }
-
-    const response = await fetch("https://router.huggingface.co/hf-inference/models/amitava2004/smolified-mindmirror-ai", {
+    const response = await fetch("http://localhost:5000/analyze", {
       method: "POST",
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ inputs }),
     });
 
     if (!response.ok) {
-      // If HF returns an error (like 401 or 410) and no token is provided, 
-      // return a graceful fallback for demo purposes.
-      console.warn(`HF API failed with ${response.status}. Using fallback response for demo.`);
+      // Fetch the exact error payload from Hugging Face APIs
+      const errorText = await response.text();
+      console.error(`\n=== HUGGING FACE API ERROR ===`);
+      console.error(`Status code: ${response.status} ${response.statusText}`);
+      console.error(`Error details:`, errorText);
+      console.error(`================================\n`);
       
+      // If HF returns an error, return a graceful fallback for demo purposes.
       const fallbackText = `Intent: Seeking clarity and support\nEmotion: Confused but hopeful\nHidden Need: Reassurance and clear direction\nResponse: I hear that you are going through a tough time right now. Remember that it's okay to feel this way. Let's take it one step at a time!`;
       
       return NextResponse.json([{ generated_text: fallbackText }]);
